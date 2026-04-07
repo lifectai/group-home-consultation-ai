@@ -6,10 +6,41 @@ import os
 from datetime import datetime
 from openai import OpenAI
 from dotenv import load_dotenv
+import gspread
+from google.oauth2.service_account import Credentials
 
 # APIキー読み込み
 load_dotenv()
 client = OpenAI()
+
+# ----------------------------
+# Google Sheets 接続
+# ----------------------------
+SCOPES = [
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive",
+]
+
+@st.cache_resource
+def get_gsheet_client():
+    creds_dict = dict(st.secrets["gcp_service_account"])
+    creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
+    return gspread.authorize(creds)
+
+def get_worksheet():
+    gc = get_gsheet_client()
+    sheet_url = st.secrets["spreadsheet_url"]
+    spreadsheet = gc.open_by_url(sheet_url)
+    try:
+        ws = spreadsheet.worksheet("相談記録")
+    except gspread.WorksheetNotFound:
+        ws = spreadsheet.add_worksheet(title="相談記録", rows=1000, cols=20)
+        ws.append_row([
+            "受付番号", "日時", "名前", "電話番号", "希望エリア", "相談区分",
+            "障がい名", "生活状況", "必要支援", "希望エリア（AI抽出）",
+            "会話ログ", "AI要約"
+        ])
+    return ws
 
 st.set_page_config(page_title="グループホーム入居相談", page_icon="🏠")
 
@@ -76,10 +107,6 @@ if "saved_once" not in st.session_state:
 
 st.caption(f"受付番号：{st.session_state.ticket_no}")
 
-# 保存先
-folder_path = os.path.expanduser("~/Desktop/AI入居相談")
-os.makedirs(folder_path, exist_ok=True)
-file_path = os.path.join(folder_path, "相談記録.xlsx")
 
 
 # ----------------------------
@@ -187,7 +214,7 @@ def generate_ai_summary(messages: list, name: str, phone: str, consultation_type
         return f"AI要約エラー: {e}"
 
 
-def save_to_excel(
+def save_to_sheets(
     ticket_no: str,
     name: str,
     phone: str,
@@ -198,29 +225,22 @@ def save_to_excel(
     extracted_info: dict
 ) -> None:
     log_text = build_log_text(messages)
-
-    data = {
-        "受付番号": [ticket_no],
-        "日時": [datetime.now().strftime("%Y-%m-%d %H:%M:%S")],
-        "名前": [name],
-        "電話番号": [phone],
-        "希望エリア": [area],
-        "相談区分": [consultation_type],
-        "障がい名": [extracted_info.get("障がい名", "未確認")],
-        "生活状況": [extracted_info.get("生活状況", "未確認")],
-        "必要支援": [extracted_info.get("必要支援", "未確認")],
-        "希望エリア（AI抽出）": [extracted_info.get("希望エリア", "未確認")],
-        "会話ログ": [log_text],
-        "AI要約": [ai_summary]
-    }
-
-    df = pd.DataFrame(data)
-
-    if os.path.exists(file_path):
-        old = pd.read_excel(file_path)
-        df = pd.concat([old, df], ignore_index=True)
-
-    df.to_excel(file_path, index=False)
+    row = [
+        ticket_no,
+        datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        name,
+        phone,
+        area,
+        consultation_type,
+        extracted_info.get("障がい名", "未確認"),
+        extracted_info.get("生活状況", "未確認"),
+        extracted_info.get("必要支援", "未確認"),
+        extracted_info.get("希望エリア", "未確認"),
+        log_text,
+        ai_summary
+    ]
+    ws = get_worksheet()
+    ws.append_row(row, value_input_option="USER_ENTERED")
 
 
 # ----------------------------
@@ -501,7 +521,7 @@ elif st.session_state.step == "finish":
             st.session_state.messages
         )
 
-        save_to_excel(
+        save_to_sheets(
             st.session_state.ticket_no,
             st.session_state.name,
             st.session_state.phone,
