@@ -611,47 +611,22 @@ elif st.session_state.step == "finish":
 
         st.session_state.saved_once = True
 
-    # フィルタ済みデータ
-    filtered_df = df.copy()
+    st.markdown("### お聞かせいただいた内容")
+    info = st.session_state.extracted_info
+    st.markdown(f"""
+| 項目 | 内容 |
+|------|------|
+| 障害種別 | {info.get("障害種別", "未確認")} |
+| 障害支援区分 | {info.get("障害支援区分", "未確認")} |
+| 生活状況 | {info.get("生活状況", "未確認")} |
+| 日常生活のケア | {info.get("日常生活のケア", "未確認")} |
+| 行動障害 | {info.get("行動障害", "未確認")} |
+| 希望入居時期 | {info.get("希望入居時期", "未確認")} |
+| 家賃上限 | {info.get("家賃上限", "未確認")} |
+| こだわり条件 | {info.get("こだわり条件", "未確認")} |
+| 希望エリア | {info.get("希望エリア", "未確認")} |
+""")
 
-    if st.session_state.area:
-        filtered_df = filtered_df[
-            filtered_df["エリア"].str.contains(st.session_state.area, na=False)
-        ]
-
-    facility_data = filtered_df.to_string()
-
-    recommend_prompt = f"""
-あなたはグループホームの相談員です。
-
-以下の相談内容をもとに、相談者の状況に合った施設を提案してください。
-
-【相談内容】
-{build_log_text(st.session_state.messages)}
-
-【施設情報】
-{facility_data}
-
-ルール：
-・空室は案内しない
-・必ず相談内容と紐づけて説明する
-・「〇〇のため、この施設が合います」と理由を書く
-・合いそうな施設を2〜3件に絞る
-・合わない場合は無理に提案しない
-"""
-
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "あなたは福祉施設提案のプロです"},
-            {"role": "user", "content": recommend_prompt}
-        ]
-    )
-
-    recommend_text = response.choices[0].message.content
-
-    st.markdown("### あなたに合いそうな施設")
-    st.write(recommend_text)
-
+    st.info("お聞かせいただいた内容を担当者に共有します。担当者より改めてご連絡いたします。")
     st.success("ご相談ありがとうございました")
-    st.info("1週間以内に担当者よりお電話いたします")
+    st.info("数日以内に担当者よりお電話いたします")
