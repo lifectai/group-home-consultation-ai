@@ -299,13 +299,27 @@ for msg in st.session_state.messages:
 if st.session_state.step == "name":
     with st.form("name_form", clear_on_submit=True):
         name_input = st.text_input("お名前")
-        submitted_name = st.form_submit_button("送信")
+        col1, col2 = st.columns(2)
+        with col1:
+            submitted_name = st.form_submit_button("送信")
+        with col2:
+            submitted_anonymous = st.form_submit_button("匿名で相談する")
 
     if submitted_name and name_input:
         st.session_state.name = name_input
         st.session_state.messages.append({"role": "user", "content": name_input})
 
         reply = "ありがとうございます。次にお電話番号を教えてください。"
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+
+        st.session_state.step = "phone"
+        st.rerun()
+
+    elif submitted_anonymous:
+        st.session_state.name = "匿名"
+        st.session_state.messages.append({"role": "user", "content": "匿名"})
+
+        reply = "承知しました。次にお電話番号を教えてください。"
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
         st.session_state.step = "phone"
