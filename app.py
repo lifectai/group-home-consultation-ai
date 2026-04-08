@@ -437,7 +437,7 @@ elif st.session_state.step == "hearing":
         placeholder="こちらにご入力ください"
     )
 
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             submitted_hearing = st.form_submit_button("送信")
@@ -445,8 +445,16 @@ elif st.session_state.step == "hearing":
         with col2:
             request_call = st.form_submit_button("電話での連絡を希望")
 
+        with col3:
+            finish_chat = st.form_submit_button("相談を終了する")
+
+    # ★相談終了
+    if finish_chat:
+        st.session_state.step = "finish"
+        st.rerun()
+
     # ★電話希望
-    if request_call:
+    elif request_call:
         st.session_state.messages.append({
             "role": "assistant",
             "content": "ありがとうございます。担当者より1週間以内にお電話いたします。"
@@ -456,7 +464,7 @@ elif st.session_state.step == "hearing":
         st.rerun()
 
     # 通常送信
-    elif submitted_hearing and hearing_input:
+    elif submitted_hearing and hearing_input and not finish_chat:
         st.session_state.messages.append({"role": "user", "content": hearing_input})
 
         filtered_df = df.copy()
