@@ -561,6 +561,27 @@ elif st.session_state.step == "consultation_select":
 
 
 # ----------------------------
+# その他相談
+# ----------------------------
+elif st.session_state.step == "consultation_other":
+    st.subheader("その他のご相談内容をお聞かせください")
+    with st.form("other_form", clear_on_submit=True):
+        other_input = st.text_area("ご相談内容", placeholder="こちらにご入力ください")
+        submitted_other = st.form_submit_button("送信")
+
+    if submitted_other and other_input:
+        consultation_type = f"その他：{other_input}"
+        st.session_state.consultation_type = consultation_type
+        st.session_state.messages.append({"role": "user", "content": other_input})
+        st.session_state.messages.append({
+            "role": "assistant",
+            "content": "ありがとうございます。ご相談内容を担当者に共有します。担当者より改めてご連絡いたします。"
+        })
+        st.session_state.step = "finish"
+        st.rerun()
+
+
+# ----------------------------
 # ヒアリング
 # ----------------------------
 elif st.session_state.step == "hearing":
