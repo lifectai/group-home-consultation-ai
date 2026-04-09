@@ -36,7 +36,7 @@ def get_worksheet():
     except gspread.WorksheetNotFound:
         ws = spreadsheet.add_worksheet(title="相談記録", rows=1000, cols=20)
         ws.append_row([
-            "受付番号", "日時", "名前", "電話番号", "希望エリア", "相談区分",
+            "受付番号", "日時", "名前", "性別", "電話番号", "希望エリア", "相談区分",
             "障害種別", "障害支援区分", "生活状況", "日常生活のケア", "行動障害",
             "希望入居時期", "家賃上限", "こだわり条件", "希望エリア（AI抽出）",
             "会話ログ", "AI要約"
@@ -82,6 +82,9 @@ if "step" not in st.session_state:
 
 if "name" not in st.session_state:
     st.session_state.name = ""
+
+if "gender" not in st.session_state:
+    st.session_state.gender = ""
 
 if "phone" not in st.session_state:
     st.session_state.phone = ""
@@ -236,6 +239,7 @@ def generate_ai_summary(messages: list, name: str, phone: str, consultation_type
 def save_to_sheets(
     ticket_no: str,
     name: str,
+    gender: str,
     phone: str,
     area: str,
     consultation_type: str,
@@ -248,6 +252,7 @@ def save_to_sheets(
         ticket_no,
         datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         name,
+        gender,
         phone,
         area,
         consultation_type,
@@ -309,17 +314,47 @@ if st.session_state.step == "name":
         st.session_state.name = name_input
         st.session_state.messages.append({"role": "user", "content": name_input})
 
-        reply = "ありがとうございます。次にお電話番号を教えてください。"
+        reply = "ありがとうございます。性別を教えてください。"
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
-        st.session_state.step = "phone"
+        st.session_state.step = "gender"
         st.rerun()
 
     elif submitted_anonymous:
         st.session_state.name = "匿名"
         st.session_state.messages.append({"role": "user", "content": "匿名"})
 
-        reply = "承知しました。次にお電話番号を教えてください。"
+        reply = "承知しました。性別を教えてください。"
+        st.session_state.messages.append({"role": "assistant", "content": reply})
+
+        st.session_state.step = "gender"
+        st.rerun()
+
+
+# ----------------------------
+# 性別選択
+# ----------------------------
+elif st.session_state.step == "gender":
+    st.subheader("性別を選択してください")
+    col1, col2, col3 = st.columns(3)
+
+    selected_gender = None
+
+    with col1:
+        if st.button("男性", use_container_width=True):
+            selected_gender = "男性"
+    with col2:
+        if st.button("女性", use_container_width=True):
+            selected_gender = "女性"
+    with col3:
+        if st.button("答えたくない", use_container_width=True):
+            selected_gender = "答えたくない"
+
+    if selected_gender:
+        st.session_state.gender = selected_gender
+        st.session_state.messages.append({"role": "user", "content": selected_gender})
+
+        reply = "ありがとうございます。次にお電話番号を教えてください。"
         st.session_state.messages.append({"role": "assistant", "content": reply})
 
         st.session_state.step = "phone"
@@ -331,18 +366,24 @@ if st.session_state.step == "name":
 # ----------------------------
 elif st.session_state.step == "phone":
     with st.form("phone_form", clear_on_submit=True):
-        phone_input = st.text_input("電話番号")
+        phone_input = st.text_input("電話番号", placeholder="半角数字で入力してください")
         submitted_phone = st.form_submit_button("送信")
 
-    if submitted_phone and phone_input:
-        st.session_state.phone = phone_input
-        st.session_state.messages.append({"role": "user", "content": phone_input})
+    if submitted_phone:
+        import re
+        if not phone_input:
+            st.error("電話番号を入力してください。")
+        elif not re.fullmatch(r"[\d\-]+", phone_input):
+            st.error("電話番号は半角数字（ハイフン可）で入力してください。")
+        else:
+            st.session_state.phone = phone_input
+            st.session_state.messages.append({"role": "user", "content": phone_input})
 
-        reply = "ありがとうございます。ご相談内容を選んでください。"
-        st.session_state.messages.append({"role": "assistant", "content": reply})
+            reply = "ありがとうございます。ご相談内容を選んでください。"
+            st.session_state.messages.append({"role": "assistant", "content": reply})
 
-        st.session_state.step = "consultation_select"
-        st.rerun()
+            st.session_state.step = "consultation_select"
+            st.rerun()
 
 
 # ----------------------------
@@ -620,6 +661,7 @@ elif st.session_state.step == "finish":
         save_to_sheets(
             st.session_state.ticket_no,
             st.session_state.name,
+            st.session_state.gender,
             st.session_state.phone,
             st.session_state.area,
             st.session_state.consultation_type,
