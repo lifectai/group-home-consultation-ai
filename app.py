@@ -1,4 +1,5 @@
 import json
+import requests
 import streamlit as st
 import pandas as pd
 df = pd.read_csv("施設マスタ.csv")
@@ -12,6 +13,8 @@ from google.oauth2.service_account import Credentials
 # APIキー読み込み
 load_dotenv()
 client = OpenAI()
+LINE_CHANNEL_ACCESS_TOKEN = os.getenv("LINE_CHANNEL_ACCESS_TOKEN", "")
+LINE_USER_ID = os.getenv("LINE_USER_ID", "")
 
 # ----------------------------
 # Google Sheets 接続
@@ -270,6 +273,44 @@ def save_to_sheets(
     ]
     ws = get_worksheet()
     ws.append_row(row, value_input_option="USER_ENTERED")
+
+
+def send_line_notification(
+    ticket_no: str,
+    name: str,
+    gender: str,
+    phone: str,
+    consultation_type: str,
+    extracted_info: dict,
+    area: str
+) -> None:
+    if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_USER_ID:
+        return
+
+    message = (
+        f"【新着相談】\n"
+        f"受付番号：{ticket_no}\n"
+        f"名前：{name}\n"
+        f"性別：{gender}\n"
+        f"電話番号：{phone}\n"
+        f"相談区分：{consultation_type}\n"
+        f"障害種別：{extracted_info.get('障害種別', '未確認')}\n"
+        f"希望エリア：{area}\n"
+        f"担当者対応をお願いします。"
+    )
+
+    requests.post(
+        "https://api.line.me/v2/bot/message/push",
+        headers={
+            "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
+            "Content-Type": "application/json",
+        },
+        json={
+            "to": LINE_USER_ID,
+            "messages": [{"type": "text", "text": message}],
+        },
+        timeout=10,
+    )
 
 
 # ----------------------------
@@ -668,6 +709,16 @@ elif st.session_state.step == "finish":
             st.session_state.messages,
             st.session_state.ai_summary,
             st.session_state.extracted_info
+        )
+
+        send_line_notification(
+            st.session_state.ticket_no,
+            st.session_state.name,
+            st.session_state.gender,
+            st.session_state.phone,
+            st.session_state.consultation_type,
+            st.session_state.extracted_info,
+            st.session_state.area
         )
 
         st.session_state.saved_once = True
