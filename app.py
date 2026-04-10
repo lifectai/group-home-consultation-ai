@@ -257,7 +257,7 @@ def save_to_sheets(
         datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M:%S"),
         name,
         gender,
-        phone,
+        "'" + str(phone),
         area,
         consultation_type,
         extracted_info.get("障害種別", "未確認"),
