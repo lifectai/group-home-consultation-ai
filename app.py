@@ -54,7 +54,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-st.title("グループホーム入居相談")
+st.title("グループホーム入居・見学のご相談受付")
 st.info("🔍 これはデモ版です。実際の相談データは保存されません。")
 st.markdown("""
 ### このアプリでできること
