@@ -55,6 +55,7 @@ st.markdown(
 )
 
 st.title("グループホーム入居・見学のご相談受付")
+st.warning("⚠️ これはデモ版です。入力された情報は保存されません。本サービスへのご相談はお電話にてお問い合わせください。")
 st.info("🔍 これはデモ版です。実際の相談データは保存されません。")
 st.markdown("""
 ### このアプリでできること
@@ -251,29 +252,7 @@ def save_to_sheets(
     ai_summary: str,
     extracted_info: dict
 ) -> None:
-    log_text = build_log_text(messages)
-    row = [
-        ticket_no,
-        datetime.now(pytz.timezone("Asia/Tokyo")).strftime("%Y-%m-%d %H:%M:%S"),
-        name,
-        gender,
-        "'" + str(phone),
-        area,
-        consultation_type,
-        extracted_info.get("障害種別", "未確認"),
-        extracted_info.get("障害支援区分", "未確認"),
-        extracted_info.get("生活状況", "未確認"),
-        extracted_info.get("日常生活のケア", "未確認"),
-        extracted_info.get("行動障害", "未確認"),
-        extracted_info.get("希望入居時期", "未確認"),
-        extracted_info.get("家賃上限", "未確認"),
-        extracted_info.get("こだわり条件", "未確認"),
-        extracted_info.get("希望エリア", "未確認"),
-        log_text,
-        ai_summary
-    ]
-    ws = get_worksheet()
-    ws.append_row(row, value_input_option="USER_ENTERED")
+    pass
 
 
 def send_line_notification(
@@ -285,33 +264,7 @@ def send_line_notification(
     extracted_info: dict,
     area: str
 ) -> None:
-    if not LINE_CHANNEL_ACCESS_TOKEN or not LINE_USER_ID:
-        return
-
-    message = (
-        f"【新着相談】\n"
-        f"受付番号：{ticket_no}\n"
-        f"名前：{name}\n"
-        f"性別：{gender}\n"
-        f"電話番号：{phone}\n"
-        f"相談区分：{consultation_type}\n"
-        f"障害種別：{extracted_info.get('障害種別', '未確認')}\n"
-        f"希望エリア：{area}\n"
-        f"担当者対応をお願いします。"
-    )
-
-    requests.post(
-        "https://api.line.me/v2/bot/message/push",
-        headers={
-            "Authorization": f"Bearer {LINE_CHANNEL_ACCESS_TOKEN}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "to": LINE_USER_ID,
-            "messages": [{"type": "text", "text": message}],
-        },
-        timeout=10,
-    )
+    pass
 
 
 # ----------------------------
