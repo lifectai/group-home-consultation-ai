@@ -48,10 +48,13 @@ https://group-home-consultation-ai-demo.streamlit.app
 https://github.com/lifectai/group-home-consultation-ai
 
 **▼ 起動直後の画面：AIが最初の挨拶をして名前を聞く**
-![初期フォーム画面](./screenshots/01_initial_form.png)
+![初期フォーム画面](./screenshots/初期フォーム画面.png)
 
 **▼ AIが順番に質問しながらヒアリングを進める（← ここで生成AI①を使用）**
-![AI会話中の画面](./screenshots/02_ai_conversation.png)
+![AI会話中の画面](./screenshots/AI会話中の画面.png)
+
+**▼ AIが障害種別・支援区分など8項目を自然な会話でヒアリング**
+![AIヒアリング中](./screenshots/AIヒアリング中2.png)
 
 **アプリの流れ**
 
@@ -61,7 +64,7 @@ https://github.com/lifectai/group-home-consultation-ai
 4. 相談終了時にAIが自動で内容を要約・構造化
 
 **▼ 全項目回答後、AIが9項目を構造化して表示（← 生成AI②③が動作）**
-![相談完了画面](./screenshots/04_completion.png)
+![相談完了画面](./screenshots/相談完了画面1.png)
 
 5. Google Sheetsに自動保存 → LINEで担当スタッフに通知
 
@@ -146,13 +149,13 @@ app.py 1ファイルで完結する構成にしました。Streamlit Cloudにデ
 Streamlit Secretsに認証情報を持たせ、@st.cache_resource でクライアントをキャッシュすることで、リロードのたびに再接続しないようにしています。
 
 **▼ 相談完了後、Google Sheetsに自動保存（← 生成AI②③が要約・構造化抽出を実行）**
-![Google Sheets保存結果](./screenshots/05_google_sheets.png)
+![Google Sheets保存結果](./screenshots/相談記録_google_sheets.png)
 
 **▼ AI要約列にはインテーク情報が自動で整理される**
-![Google Sheets AI要約](./screenshots/05b_google_sheets_ai.png)
+![Google Sheets AI要約](./screenshots/相談記録_google_sheets2.png)
 
 **▼ 相談完了と同時にスタッフのLINEにリアルタイム通知が届く**
-![LINE通知画面](./screenshots/S__63995908.jpg)
+![LINE通知画面](./screenshots/LINE通知.jpg)
 
 ### AIヒアリングの設計
 
